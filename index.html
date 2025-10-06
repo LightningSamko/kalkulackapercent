@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kalkulačka zľavy + prepočet zisku (Zamestnanec / Firma)</title>
+  <title>Kalkulačka zisku po zľave (náklady + zisky)</title>
   <style>
     :root {
       font-family: Inter, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
-      padding: 0;
-      margin: 0;
+      padding: 0; margin: 0;
     }
     body {
       padding: 18px;
@@ -23,64 +22,31 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.4);
       padding: 20px;
     }
-    h1 {
-      font-size: 22px;
-      margin: 0 0 8px;
-      color: #f1f5f9;
-    }
-    p.lead {
-      margin: 0 0 18px;
-      color: #cbd5e1;
-    }
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+    h1 { font-size: 22px; margin: 0 0 8px; color: #f1f5f9; }
+    p.lead { margin: 0 0 18px; color: #cbd5e1; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
     .col {
-      flex: 1 1 220px;
-      min-width: 200px;
-      background: #273549;
-      padding: 14px;
-      border-radius: 10px;
-      box-sizing: border-box;
+      flex: 1 1 220px; min-width: 200px;
+      background: #273549; padding: 14px;
+      border-radius: 10px; box-sizing: border-box;
     }
     label {
-      display: block;
-      font-size: 13px;
-      margin-bottom: 6px;
-      color: #e2e8f0;
+      display: block; font-size: 13px;
+      margin-bottom: 6px; color: #e2e8f0;
     }
     input[type=text], input[type=number] {
-      width: 100%;
-      padding: 9px 10px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #1e293b;
-      color: #f8fafc;
-      font-size: 15px;
-      box-sizing: border-box;
-      outline: none;
-      transition: border-color 0.2s, background 0.2s;
+      width: 100%; padding: 9px 10px;
+      border-radius: 8px; border: 1px solid #475569;
+      background: #1e293b; color: #f8fafc;
+      font-size: 15px; box-sizing: border-box;
+      outline: none; transition: border-color 0.2s, background 0.2s;
     }
-    input[type=text]:focus, input[type=number]:focus {
-      border-color: #0ea5e9;
-      background: #334155;
-    }
-    .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 14px;
-    }
+    input:focus { border-color: #0ea5e9; background: #334155; }
+    .controls { display: flex; gap: 8px; align-items: center; margin-top: 14px; }
     button {
-      background: #0ea5e9;
-      color: #fff;
-      border: 0;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
+      background: #0ea5e9; color: #fff; border: 0;
+      padding: 10px 14px; border-radius: 8px;
+      cursor: pointer; font-weight: 600;
       transition: background 0.2s;
     }
     button:hover { background: #0284c7; }
@@ -90,81 +56,55 @@
       border-top: 1px solid #334155;
       padding-top: 18px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    td, th {
-      padding: 10px 8px;
-      text-align: left;
-      border-bottom: 1px solid #334155;
-    }
-    th {
-      font-weight: 600;
-      color: #f1f5f9;
-    }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 10px 8px; text-align: left; border-bottom: 1px solid #334155; }
+    th { font-weight: 600; color: #f1f5f9; }
     .muted { color: #94a3b8; font-size: 13px; }
     .warn { color: #facc15; font-weight: 600; }
     .small { font-size: 13px; color: #94a3b8; }
     .copy {
-      background: #1e40af;
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      color: #f8fafc;
-      font-size: 13px;
+      background: #1e40af; border-radius: 6px;
+      padding: 6px 10px; cursor: pointer;
+      color: #f8fafc; font-size: 13px;
     }
     .copy:hover { background: #1d4ed8; }
-    footer {
-      margin-top: 14px;
-      font-size: 13px;
-      color: #94a3b8;
-      text-align: center;
-    }
+    footer { margin-top: 14px; font-size: 13px; color: #94a3b8; text-align: center; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Kalkulačka zľavy + prepočet zisku</h1>
-    <p class="lead">Zadaj pôvodnú cenu, zisk (zamestnanec) a podiel firmy. Skript vypočíta percentá a po zľave prepočíta nové čiastky.</p>
+    <h1>Kalkulačka zisku po zľave</h1>
+    <p class="lead">Zadaj náklady, zisk zamestnanca a firmy. Skript vypočíta predajnú cenu a prepočíta zisky po zľave.</p>
 
     <form id="calcForm">
       <div class="row">
         <div class="col">
-          <label for="price">Pôvodná cena (Kč)</label>
-          <input id="price" type="text" inputmode="numeric" value="40000" />
+          <label for="naklady">Náklady (oprava / materiál)</label>
+          <input id="naklady" type="text" inputmode="numeric" value="160000" />
         </div>
         <div class="col">
-          <label>Režim zadania</label>
-          <label class="small"><input type="radio" name="mode" value="amount" checked> Suma (Kč)</label>
-          <label class="small"><input type="radio" name="mode" value="percent"> Percentá (%)</label>
+          <label for="ziskZam">Zisk zamestnanec (Kč)</label>
+          <input id="ziskZam" type="text" inputmode="numeric" value="80000" />
         </div>
         <div class="col">
-          <label for="zisk">Zisk (zamestnanec)</label>
-          <input id="zisk" type="text" inputmode="numeric" value="32000" />
+          <label for="ziskFirma">Zisk firma (Kč)</label>
+          <input id="ziskFirma" type="text" inputmode="numeric" value="16000" />
         </div>
         <div class="col">
-          <label for="firma">Firma</label>
-          <input id="firma" type="text" inputmode="numeric" value="6400" />
-        </div>
-        <div class="col">
-          <label for="discount">Zľava (%)</label>
-          <input id="discount" type="number" min="0" max="100" value="20" />
+          <label for="zlava">Zľava (%)</label>
+          <input id="zlava" type="number" min="0" max="100" value="20" />
         </div>
       </div>
 
       <div class="controls">
         <button id="run" type="button">Vypočítať</button>
         <button id="reset" type="button" class="secondary">Obnoviť</button>
-        <div class="small" style="margin-left:auto">Výstup je zaokrúhlený na 2 des. miesta</div>
       </div>
     </form>
 
     <div class="results" id="results"></div>
 
-    <footer>
-      © ALL-IN Corporation, 2025
-    </footer>
+    <footer>© ALL-IN Corporation, 2025</footer>
   </div>
 
   <script>
@@ -180,80 +120,56 @@
       return Number(n.toFixed(digits)).toLocaleString('sk-SK');
     }
 
-    function getMode(){ return document.querySelector('input[name="mode"]:checked').value; }
-
     function compute(){
-      const price = parseNum(el('price').value);
-      const ziskIn = parseNum(el('zisk').value);
-      const firmaIn = parseNum(el('firma').value);
-      const discount = parseNum(el('discount').value);
-      const mode = getMode();
+      const naklady = parseNum(el('naklady').value);
+      const ziskZam = parseNum(el('ziskZam').value);
+      const ziskFirma = parseNum(el('ziskFirma').value);
+      const zlava = parseNum(el('zlava').value);
 
-      if(!isFinite(price) || price <= 0) return render("Chybná pôvodná cena");
-      if(!isFinite(discount) || discount < 0 || discount > 100) return render("Chybná zľava");
+      if(!isFinite(naklady) || naklady <= 0) return render("Chybné náklady");
+      if(!isFinite(zlava) || zlava < 0 || zlava > 100) return render("Chybná zľava");
 
-      let percZisk, percFirma, origZiskAmt, origFirmaAmt;
-      if(mode === 'amount'){
-        origZiskAmt = ziskIn;
-        origFirmaAmt = firmaIn;
-        percZisk = (origZiskAmt / price) * 100;
-        percFirma = (origFirmaAmt / price) * 100;
-      } else {
-        percZisk = ziskIn;
-        percFirma = firmaIn;
-        origZiskAmt = (price * percZisk) / 100;
-        origFirmaAmt = (price * percFirma) / 100;
-      }
-      const percSum = percZisk + percFirma;
-      const otherPerc = 100 - percSum;
+      const predajnaCena = naklady + ziskZam + ziskFirma;
+      const novaCena = predajnaCena * (1 - zlava/100);
 
-      const discountAmt = (price * discount) / 100;
-      const newPrice = price - discountAmt;
+      // Po zľave sa znižuje len zisk
+      const novaZiskSuma = novaCena - naklady;
+      const pomerZam = ziskZam / (ziskZam + ziskFirma);
+      const novaZiskZam = novaZiskSuma * pomerZam;
+      const novaZiskFirma = novaZiskSuma * (1 - pomerZam);
 
-      const newZisk = (newPrice * percZisk) / 100;
-      const newFirma = (newPrice * percFirma) / 100;
-      const newOther = (newPrice * otherPerc) / 100;
+      const deltaZam = novaZiskZam - ziskZam;
+      const deltaFirma = novaZiskFirma - ziskFirma;
 
-      const deltaZisk = newZisk - origZiskAmt;
-      const deltaFirma = newFirma - origFirmaAmt;
-
-      let warnings = '';
-      if(percSum > 100){ warnings = `<div class="warn">Pozor: súčet percent > 100 %</div>`; }
+      const percNaklady = (naklady / predajnaCena) * 100;
+      const percZam = (ziskZam / predajnaCena) * 100;
+      const percFirma = (ziskFirma / predajnaCena) * 100;
 
       const html = `
-        ${warnings}
         <table>
-          <thead><tr><th>Položka</th><th>Pred zľavou</th><th>Po zľave</th></tr></thead>
+          <thead><tr><th>Položka</th><th>Pred zľavou</th><th>Po zľave</th><th>Zmena</th></tr></thead>
           <tbody>
-            <tr><td>Cena</td><td>${fmt(price)} Kč</td><td>${fmt(newPrice)} Kč</td></tr>
-            <tr><td>Zľava</td><td>-</td><td>${fmt(discountAmt)} Kč (${discount} %)</td></tr>
-            <tr><td>Zisk</td><td>${fmt(origZiskAmt)} Kč</td><td>${fmt(newZisk)} Kč</td></tr>
-            <tr><td>Firma</td><td>${fmt(origFirmaAmt)} Kč</td><td>${fmt(newFirma)} Kč</td></tr>
-            <tr><td>Ostatné</td><td>${fmt(price*otherPerc/100)} Kč</td><td>${fmt(newOther)} Kč</td></tr>
-            <tr><td>Zmena Zisku</td><td colspan="2">${fmt(deltaZisk)} Kč</td></tr>
-            <tr><td>Zmena Firmy</td><td colspan="2">${fmt(deltaFirma)} Kč</td></tr>
+            <tr><td>Náklady</td><td>${fmt(naklady)} Kč</td><td>${fmt(naklady)} Kč</td><td>-</td></tr>
+            <tr><td>Zisk zamestnanec</td><td>${fmt(ziskZam)} Kč</td><td>${fmt(novaZiskZam)} Kč</td><td>${fmt(deltaZam)} Kč</td></tr>
+            <tr><td>Zisk firma</td><td>${fmt(ziskFirma)} Kč</td><td>${fmt(novaZiskFirma)} Kč</td><td>${fmt(deltaFirma)} Kč</td></tr>
+            <tr><td><b>Celkom cena</b></td><td><b>${fmt(predajnaCena)} Kč</b></td><td><b>${fmt(novaCena)} Kč</b></td><td>-</td></tr>
           </tbody>
         </table>
-        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-          <div class="copy" id="copy">Skopírovať výsledok</div>
+        <div class="small" style="margin-top:10px">
+          Podiely pred zľavou: Zamestnanec ${fmt(percZam)} %, Firma ${fmt(percFirma)} %, Náklady ${fmt(percNaklady)} %.
         </div>
       `;
       el('results').innerHTML = html;
-
-      document.getElementById('copy').addEventListener('click', ()=>{
-        const text = `Cena: ${fmt(price)} Kč -> ${fmt(newPrice)} Kč (po zľave)`;
-        navigator.clipboard.writeText(text);
-        document.getElementById('copy').textContent = 'Skopírované ✓';
-        setTimeout(()=>document.getElementById('copy').textContent='Skopírovať výsledok',1200);
-      });
     }
 
     function render(msg){ el('results').innerHTML = `<div class="warn">${msg}</div>`; }
 
     document.getElementById('run').addEventListener('click', compute);
     document.getElementById('reset').addEventListener('click', ()=>{
-      el('price').value = '40000'; el('zisk').value = '32000'; el('firma').value = '6400'; el('discount').value = '20';
-      document.querySelector('input[name="mode"][value="amount"]').checked = true;
+      el('naklady').value = '160000';
+      el('ziskZam').value = '80000';
+      el('ziskFirma').value = '16000';
+      el('zlava').value = '20';
       compute();
     });
     compute();
