@@ -40,9 +40,10 @@
     .col {
       flex: 1 1 220px;
       min-width: 200px;
-      background: #334155;
-      padding: 12px;
+      background: #273549;
+      padding: 14px;
       border-radius: 10px;
+      box-sizing: border-box;
     }
     label {
       display: block;
@@ -52,12 +53,19 @@
     }
     input[type=text], input[type=number] {
       width: 100%;
-      padding: 8px 10px;
+      padding: 9px 10px;
       border-radius: 8px;
       border: 1px solid #475569;
-      background: #0f172a;
+      background: #1e293b;
       color: #f8fafc;
       font-size: 15px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    input[type=text]:focus, input[type=number]:focus {
+      border-color: #0ea5e9;
+      background: #334155;
     }
     .controls {
       display: flex;
