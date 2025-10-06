@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalkulačka zľavy + prepočet zisku (Zamestnanec / Firma)</title>
+  <style>
+    :root{font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;padding:0;margin:0}
+    body{padding:18px;background:#f6f7fb;color:#0f172a}
+    .wrap{max-width:900px;margin:18px auto;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(12,18,38,0.08);padding:20px}
+    h1{font-size:20px;margin:0 0 8px}
+    p.lead{margin:0 0 18px;color:#334155}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 220px;min-width:200px}
+    label{display:block;font-size:13px;margin-bottom:6px}
+    input[type=text], input[type=number]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #e6e9ef;font-size:15px}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:10px}
+    button{background:#0ea5a4;color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#64748b}
+    .results{margin-top:18px;border-top:1px dashed #e6e9ef;padding-top:18px}
+    table{width:100%;border-collapse:collapse}
+    td,th{padding:8px 6px;text-align:left;border-bottom:1px solid #f1f5f9}
+    th{font-weight:600;color:#0f172a}
+    .muted{color:#475569;font-size:13px}
+    .warn{color:#b45309}
+    .small{font-size:13px;color:#475569}
+    .inline{display:inline-block}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    .copy{background:#e2e8f0;border-radius:6px;padding:6px 8px;cursor:pointer}
+    footer{margin-top:14px;font-size:13px;color:#475569}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Kalkulačka zľavy + prepočet zisku</h1>
+    <p class="lead">Vlož pôvodnú cenu, zisk (zamestnanec) a podiel firmy — skript vypočíta percentá a po zľave prepočíta nové čiastky.</p>
+
+    <form id="calcForm">
+      <div class="row">
+        <div class="col">
+          <label for="price">Pôvodná cena (Kč)</label>
+          <input id="price" type="text" inputmode="numeric" value="40000" />
+        </div>
+
+        <div class="col">
+          <label>Režim zadania pre <strong>Zisk</strong> a <strong>Firma</strong></label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label class="small"><input type="radio" name="mode" value="amount" checked> Suma (Kč)</label>
+            <label class="small"><input type="radio" name="mode" value="percent"> Percentá (%)</label>
+          </div>
+        </div>
+
+        <div class="col">
+          <label for="zisk">Zisk (zamestnanec)</label>
+          <input id="zisk" type="text" inputmode="numeric" value="32000" />
+        </div>
+
+        <div class="col">
+          <label for="firma">Firma</label>
+          <input id="firma" type="text" inputmode="numeric" value="6400" />
+        </div>
+
+        <div class="col">
+          <label for="discount">Zľava (%)</label>
+          <input id="discount" type="number" min="0" max="100" value="20" />
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="run" type="button">Vypočítaj</button>
+        <button id="reset" type="button" class="secondary">Obnoviť príklad</button>
+        <div class="small muted" style="margin-left:auto">Výstup je zaokrúhlený na 2 des. miesta</div>
+      </div>
+    </form>
+
+    <div class="results" id="results" aria-live="polite">
+      <!-- results will be injected here -->
+    </div>
+
+    <footer>
+      Postup nasadenia: vytvor repozitár na GitHub (napr. <code>username.github.io</code> alebo akýkoľvek projekt, nahraj tento <code>index.html</code>), aktivuj Pages. Potrebuješ pomoc s push cez git? Napíš a pošlem presné príkazy.
+    </footer>
+  </div>
+
+  <script>
+    // Helpery
+    const el = id => document.getElementById(id);
+    const q = sel => document.querySelector(sel);
+
+    function parseNum(str){
+      if(str === null || str === undefined) return NaN;
+      const s = String(str).trim().replace(/\s+/g,'').replace(/,/g,'.');
+      if(s.length === 0) return NaN;
+      return Number(s);
+    }
+
+    function fmt(n, digits=2){
+      if(!isFinite(n)) return '-';
+      // for Slovak formatting
+      return Number(n.toFixed(digits)).toLocaleString('sk-SK');
+    }
+
+    function getMode(){
+      return document.querySelector('input[name="mode"]:checked').value;
+    }
+
+    function compute(){
+      const price = parseNum(el('price').value);
+      const ziskIn = parseNum(el('zisk').value);
+      const firmaIn = parseNum(el('firma').value);
+      const discount = parseNum(el('discount').value);
+      const mode = getMode();
+
+      if(!isFinite(price) || price <= 0){
+        renderMessage('Chyba: pôvodná cena musí byť kladné číslo.');
+        return;
+      }
+      if(!isFinite(discount) || discount < 0 || discount > 100){
+        renderMessage('Chyba: zľava musí byť číslo 0–100.');
+        return;
+      }
+
+      let percZisk, percFirma;
+      let origZiskAmt, origFirmaAmt;
+
+      if(mode === 'amount'){
+        if(!isFinite(ziskIn) || !isFinite(firmaIn)){
+          renderMessage('Chyba: zadaj sumy pre Zisk a Firmu.');
+          return;
+        }
+        origZiskAmt = ziskIn;
+        origFirmaAmt = firmaIn;
+        percZisk = (origZiskAmt / price) * 100;
+        percFirma = (origFirmaAmt / price) * 100;
+      } else {
+        // percent mode
+        if(!isFinite(ziskIn) || !isFinite(firmaIn)){
+          renderMessage('Chyba: zadaj percentá pre Zisk a Firmu.');
+          return;
+        }
+        percZisk = ziskIn;
+        percFirma = firmaIn;
+        origZiskAmt = (price * percZisk) / 100;
+        origFirmaAmt = (price * percFirma) / 100;
+      }
+
+      const percSum = percZisk + percFirma;
+      const otherPerc = 100 - percSum;
+
+      const discountAmt = (price * discount) / 100;
+      const newPrice = price - discountAmt;
+
+      const newZisk = (newPrice * percZisk) / 100;
+      const newFirma = (newPrice * percFirma) / 100;
+      const newOther = (newPrice * otherPerc) / 100;
+
+      const deltaZisk = newZisk - origZiskAmt;
+      const deltaFirma = newFirma - origFirmaAmt;
+
+      // Build result HTML
+      let warnings = '';
+      if(percSum > 100.0001){
+        warnings += `<div class="warn">Pozor: súčet percent (Zisk + Firma) je väčší než 100 % (${fmt(percSum,2)} %). Výpočty použijú zadané percentá.</div>`;
+      } else if(percSum < 99.9999){
+        warnings += `<div class="small muted">Poznámka: zvyšných ${fmt(otherPerc,2)} % sa považuje za "ostatné" (napr. dane, poplatky, materiál).</div>`;
+      }
+
+      const html = `
+        ${warnings}
+        <table>
+          <thead>
+            <tr><th>Ukazovateľ</th><th>Pred zľavou</th><th>Po zľave (${fmt(newPrice,2)} Kč)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="muted">Celková cena</td><td>${fmt(price,2)} Kč</td><td>${fmt(newPrice,2)} Kč</td></tr>
+            <tr><td class="muted">Zľava</td><td>-</td><td>${fmt(discountAmt,2)} Kč (${fmt(discount,2)} %)</td></tr>
+            <tr><td class="muted">Zisk (zamestnanec)</td><td>${fmt(origZiskAmt,2)} Kč (${fmt(percZisk,2)} %)</td><td>${fmt(newZisk,2)} Kč (${fmt(percZisk,2)} %)</td></tr>
+            <tr><td class="muted">Firma</td><td>${fmt(origFirmaAmt,2)} Kč (${fmt(percFirma,2)} %)</td><td>${fmt(newFirma,2)} Kč (${fmt(percFirma,2)} %)</td></tr>
+            <tr><td class="muted">Ostatné (${fmt(otherPerc,2)} %)</td><td>${fmt(price * otherPerc / 100,2)} Kč</td><td>${fmt(newOther,2)} Kč</td></tr>
+            <tr><td class="muted">Zmena Zisku</td><td colspan="2">${fmt(deltaZisk,2)} Kč (${fmt((deltaZisk / (origZiskAmt || 1)) * 100,2)} %)</td></tr>
+            <tr><td class="muted">Zmena Firmy</td><td colspan="2">${fmt(deltaFirma,2)} Kč (${fmt((deltaFirma / (origFirmaAmt || 1)) * 100,2)} %)</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <div class="copy" id="copy">Skopírovať výsledok</div>
+          <div class="small muted">Formát: čísla sú zaokrúhlené na 2 des. miesta.</div>
+        </div>
+      `;
+
+      el('results').innerHTML = html;
+
+      document.getElementById('copy').addEventListener('click', ()=>{
+        const text = `Pôvodná cena: ${fmt(price,2)} Kč\nZľava: ${fmt(discount,2)} % (${fmt(discountAmt,2)} Kč)\nPo zľave: ${fmt(newPrice,2)} Kč\nZisk (po): ${fmt(newZisk,2)} Kč\nFirma (po): ${fmt(newFirma,2)} Kč`;
+        navigator.clipboard && navigator.clipboard.writeText(text).then(()=>{
+          document.getElementById('copy').textContent = 'Skopírované ✓';
+          setTimeout(()=>document.getElementById('copy').textContent = 'Skopírovať výsledok',1200);
+        }).catch(()=>alert('Kopírovanie zlyhalo — skopírujte ručne.'));
+      });
+    }
+
+    function renderMessage(msg){
+      el('results').innerHTML = `<div class="warn">${msg}</div>`;
+    }
+
+    // events
+    document.getElementById('run').addEventListener('click', compute);
+    document.getElementById('reset').addEventListener('click', ()=>{
+      el('price').value = '40000'; el('zisk').value = '32000'; el('firma').value = '6400'; el('discount').value = '20';
+      document.querySelector('input[name="mode"][value="amount"]').checked = true;
+      compute();
+    });
+
+    // recompute on enter in any field
+    ['price','zisk','firma','discount'].forEach(id => {
+      el(id).addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); compute(); } });
+    });
+
+    // initial calculate
+    compute();
+  </script>
+</body>
+</html>
